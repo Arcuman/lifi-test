@@ -1,0 +1,54 @@
+{
+  "name": "lifi-fee-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Docker-first FeeCollector event indexer and query API",
+  "engines": {
+    "node": ">=24.14.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev:api": "tsx src/app/api/main.ts",
+    "dev:worker": "tsx src/app/worker/main.ts",
+    "dev:all": "tsx src/app/bootstrap/dev-all.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "npm run build && TESTCONTAINERS_RYUK_DISABLED=true vitest run --project e2e"
+  },
+  "dependencies": {
+    "@typegoose/typegoose": "13.2.1",
+    "ethers": "5.8.0",
+    "express": "5.2.1",
+    "helmet": "8.1.0",
+    "mongoose": "9.2.4",
+    "pino": "10.3.1",
+    "pino-http": "11.0.0",
+    "reflect-metadata": "0.2.2",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.4",
+    "@types/express": "5.0.6",
+    "@types/node": "25.4.0",
+    "@types/supertest": "6.0.3",
+    "@typescript-eslint/eslint-plugin": "8.57.0",
+    "@typescript-eslint/parser": "8.57.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "9.39.4",
+    "eslint-import-resolver-typescript": "4.4.4",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-promise": "7.2.1",
+    "mongodb-memory-server": "11.0.1",
+    "prettier": "3.8.1",
+    "supertest": "7.2.2",
+    "testcontainers": "11.12.0",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

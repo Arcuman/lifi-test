@@ -1,0 +1,24 @@
+[
+  {
+    "chainId": 137,
+    "contractAddress": "0xbd6c7b0d2f68c2b7805d88388319cfb6ecb50ea9",
+    "eventName": "FeesCollected",
+    "blockNumber": 78600000,
+    "blockHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "blockTimestamp": "2026-03-12T08:00:00.000Z",
+    "transactionHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "transactionIndex": 0,
+    "logIndex": 0,
+    "token": "0x0000000000000000000000000000000000000000",
+    "integrator": "0x1111111111111111111111111111111111111111",
+    "integratorFee": "1000",
+    "lifiFee": "2000",
+    "removed": false,
+    "orphaned": false,
+    "syncedAt": "2026-03-12T08:00:05.000Z",
+    "rawTopics": [
+      "0x1111111111111111111111111111111111111111111111111111111111111111"
+    ],
+    "rawData": "0x"
+  }
+]
