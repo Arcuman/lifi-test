@@ -27,6 +27,14 @@ flowchart TD
     E2E --> Release
 ```
 
+## 1.1 Test Authoring Guardrails
+
+- Prefer asserting observable behavior over asserting that a mock was called.
+- Mock boundaries such as RPC gateways, clocks, or loggers, but keep the service under test real.
+- A pagination test should walk all pages and prove deterministic order, no duplicates, no gaps, and a terminal `nextCursor = null`.
+- A runtime integration test should execute the real service entrypoint, such as `runOnce()`, and inspect persisted state instead of only checking wiring.
+- An orchestration unit test may assert collaborator calls, but it should also verify the selected collaborator, forwarded context, or returned contract so that the test catches real regressions.
+
 ```mermaid
 flowchart LR
     subgraph Pure["Pure logic"]

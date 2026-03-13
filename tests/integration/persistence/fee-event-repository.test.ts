@@ -123,51 +123,69 @@ describe("MongoFeeEventRepository", () => {
   });
 
   test("supports cursor pagination", async () => {
-    const base = makeSampleFeeEvent();
-    const first = makeSampleFeeEvent({
-      blockNumber: 102,
+    const newest = makeSampleFeeEvent({
+      blockNumber: 103,
       logIndex: 3,
       transactionHash: `0x${"e".repeat(63)}5`,
       blockHash: `0x${"f".repeat(63)}6`
     });
-    const second = makeSampleFeeEvent({
-      blockNumber: 101,
+    const newer = makeSampleFeeEvent({
+      blockNumber: 102,
       logIndex: 2,
       transactionHash: `0x${"1".repeat(63)}7`,
       blockHash: `0x${"2".repeat(63)}8`
     });
-    const third = makeSampleFeeEvent({
-      blockNumber: 100,
+    const older = makeSampleFeeEvent({
+      blockNumber: 101,
       logIndex: 1,
       transactionHash: `0x${"3".repeat(63)}9`,
       blockHash: `0x${"4".repeat(63)}a`
     });
-
-    await persistFeeEvents(repository, txManager, [base, first, second, third]);
-
-    const page1 = await repository.getFeesByIntegrator({
-      integrator: base.integrator,
-      limit: 2
+    const oldest = makeSampleFeeEvent({
+      blockNumber: 100,
+      logIndex: 0,
+      transactionHash: `0x${"5".repeat(63)}b`,
+      blockHash: `0x${"6".repeat(63)}c`
     });
 
-    expect(page1.items).toHaveLength(2);
-    expect(page1.nextCursor).toBeTruthy();
+    await persistFeeEvents(repository, txManager, [
+      older,
+      oldest,
+      newest,
+      newer
+    ]);
 
-    const page2 = await repository.getFeesByIntegrator(
-      page1.nextCursor
-        ? {
-            integrator: base.integrator,
-            limit: 2,
-            cursor: page1.nextCursor
-          }
-        : {
-            integrator: base.integrator,
-            limit: 2
-          }
-    );
+    const expectedOrder = [newest, newer, older, oldest].map(toEventKey);
+    const pages: string[][] = [];
+    const traversed: string[] = [];
+    let cursor: string | undefined;
 
-    expect(page2.items).toHaveLength(2);
-    expect(decodeCursor(page1.nextCursor ?? "")).toBeTruthy();
+    while (true) {
+      const page = await repository.getFeesByIntegrator({
+        integrator: newest.integrator,
+        limit: 2,
+        ...(cursor ? { cursor } : {})
+      });
+      const pageKeys = page.items.map(toFeeListItemKey);
+
+      pages.push(pageKeys);
+      traversed.push(...pageKeys);
+
+      if (!page.nextCursor) {
+        expect(page.items).toHaveLength(2);
+        break;
+      }
+
+      expect(decodeCursor(page.nextCursor)).toBeTruthy();
+      cursor = page.nextCursor;
+    }
+
+    expect(pages).toEqual([
+      expectedOrder.slice(0, 2),
+      expectedOrder.slice(2)
+    ]);
+    expect(traversed).toEqual(expectedOrder);
+    expect(new Set(traversed).size).toBe(expectedOrder.length);
   });
 
   test("supports merged cross-chain reads when chainId is omitted", async () => {
@@ -276,3 +294,18 @@ describe("MongoFeeEventRepository", () => {
     expect(result.items[0]?.blockHash).toBe(reorgReplacement.blockHash);
   });
 });
+
+const toEventKey = (
+  event: Pick<
+    ReturnType<typeof makeSampleFeeEvent>,
+    "chainId" | "blockNumber" | "logIndex" | "blockHash"
+  >
+): string =>
+  [event.chainId, event.blockNumber, event.logIndex, event.blockHash].join(":");
+
+const toFeeListItemKey = (
+  item: Awaited<
+    ReturnType<MongoFeeEventRepository["getFeesByIntegrator"]>
+  >["items"][number]
+): string =>
+  [item.chainId, item.blockNumber, item.logIndex, item.blockHash].join(":");

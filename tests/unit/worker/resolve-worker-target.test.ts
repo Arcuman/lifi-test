@@ -8,6 +8,12 @@ import type { WorkerTargetDefinition } from "../../../src/app/worker/worker-targ
 
 describe("resolveWorkerTarget", () => {
   test("resolves a single worker target by module, event, and chain", async () => {
+    const context = {
+      env: {},
+      logger: {} as never,
+      workerConfig: {} as never,
+      workerInstanceId: "worker-a"
+    };
     const service: WorkerCycleService = {
       runOnce: vi.fn(async () => ({
         processedEvents: 0,
@@ -29,6 +35,56 @@ describe("resolveWorkerTarget", () => {
         eventKey: "fees-collected",
         chainKey: "polygon"
       },
+      context
+    });
+
+    expect(resolved).toEqual({
+      name: "fee-events:fees-collected:polygon",
+      service
+    });
+    expect(createService).toHaveBeenCalledOnce();
+    expect(createService).toHaveBeenCalledWith(context);
+  });
+
+  test("selects the matching target when multiple definitions are registered", async () => {
+    const wrongModuleCreateService = vi.fn(async () => {
+      throw new Error("should not resolve wrong module");
+    });
+    const wrongEventCreateService = vi.fn(async () => {
+      throw new Error("should not resolve wrong event");
+    });
+    const correctService: WorkerCycleService = {
+      runOnce: vi.fn(async () => ({
+        processedEvents: 1,
+        processedBatches: 1,
+        scannedToBlock: 78600000
+      }))
+    };
+    const correctCreateService = vi.fn(async () => correctService);
+
+    const resolved = await resolveWorkerTarget({
+      definitions: [
+        createTargetDefinition({
+          moduleKey: "withdrawal-events",
+          eventKey: "fees-collected",
+          createService: wrongModuleCreateService
+        }),
+        createTargetDefinition({
+          moduleKey: "fee-events",
+          eventKey: "withdrawal-created",
+          createService: wrongEventCreateService
+        }),
+        createTargetDefinition({
+          moduleKey: "fee-events",
+          eventKey: "fees-collected",
+          createService: correctCreateService
+        })
+      ],
+      workerTarget: {
+        moduleKey: "fee-events",
+        eventKey: "fees-collected",
+        chainKey: "polygon"
+      },
       context: {
         env: {},
         logger: {} as never,
@@ -39,9 +95,11 @@ describe("resolveWorkerTarget", () => {
 
     expect(resolved).toEqual({
       name: "fee-events:fees-collected:polygon",
-      service
+      service: correctService
     });
-    expect(createService).toHaveBeenCalledOnce();
+    expect(correctCreateService).toHaveBeenCalledOnce();
+    expect(wrongModuleCreateService).not.toHaveBeenCalled();
+    expect(wrongEventCreateService).not.toHaveBeenCalled();
   });
 
   test("throws a readable error when the target is not registered", async () => {
